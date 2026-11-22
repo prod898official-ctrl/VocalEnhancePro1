@@ -1,0 +1,84 @@
+build/
+.vs/
+*.user
+
+cmake_minimum_required(VERSION 3.22)
+
+# Statyczny runtime MSVC - wtyczka dziala bez instalowania VC++ Redistributable
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+project(VocalEnhancePro VERSION 1.0.0)
+
+include(FetchContent)
+FetchContent_Declare(JUCE
+    GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+    GIT_TAG 8.0.4
+    GIT_SHALLOW TRUE)
+FetchContent_MakeAvailable(JUCE)
+
+juce_add_plugin(VocalEnhancePro
+    COMPANY_NAME "Prod898"
+    PLUGIN_MANUFACTURER_CODE Prod
+    PLUGIN_CODE Vep1
+    FORMATS VST3
+    PRODUCT_NAME "VocalEnhancePro"
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    COPY_PLUGIN_AFTER_BUILD FALSE
+    VST3_CATEGORIES Fx)
+
+target_sources(VocalEnhancePro PRIVATE
+    Source/PluginProcessor.cpp
+    Source/PluginProcessor.h
+    Source/PluginEditor.cpp
+    Source/PluginEditor.h)
+
+target_compile_definitions(VocalEnhancePro PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_VST3_CAN_REPLACE_VST2=0)
+
+target_link_libraries(VocalEnhancePro
+    PRIVATE
+        juce::juce_audio_utils
+        juce::juce_dsp
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags)
+
+# VocalEnhancePro
+
+Wtyczka VST3 do czyszczenia i poprawiania wokali (FL Studio i inne DAW-y).
+Nowoczesny interfejs w kolorach granat / czerń / neonowy fiolet.
+
+## Pokrętła
+| Pokrętło | Co robi |
+|---|---|
+| CLEAN | Redukcja szumu w przerwach (expander/gate) + delikatne wycięcie "mułu" ~280 Hz |
+| LOW CUT | Filtr górnoprzepustowy 24 dB/okt (20-300 Hz) - usuwa dudnienie, pop, wibracje |
+| DE-ESS | De-esser - łagodzi syczące "s" i "sz" (pasmo od ~6 kHz) |
+| COMPRESS | Kompresor wokalu z automatycznym wzmocnieniem |
+| WARMTH | Półka basowa 200 Hz (-6..+6 dB) - ciepło |
+| PRESENCE | Wzmocnienie obecności ~3.8 kHz (-6..+6 dB) - wokal "z przodu" |
+| AIR | Półka wysokich 11 kHz (0..+8 dB) - przestrzeń i połysk |
+| MIX | Dry/Wet |
+| OUTPUT | Głośność wyjścia (-12..+12 dB) |
+
+## Instalacja (Windows)
+1. Wejdź w zakładkę **Actions** -> ostatni zielony build -> pobierz **VocalEnhancePro-Windows-VST3**.
+   (albo w **Releases**, jeśli utworzysz tag np. `v1.0.0`)
+2. Rozpakuj i skopiuj folder `VocalEnhancePro.vst3` do:
+   `C:\Program Files\Common Files\VST3\`
+3. FL Studio: *Options -> Manage plugins -> Find installed plugins* (Start scan).
+4. Wtyczka pojawi się w Mixerze jako efekt: VocalEnhancePro.
+
+## Ręczne budowanie
+```
+cmake -B build -G "Visual Studio 17 2022" -A x64
+cmake --build build --config Release
+```
+Wynik: `build/VocalEnhancePro_artefacts/Release/VST3/VocalEnhancePro.vst3`
+
+## Wskazówki
+Zacznij od ustawień domyślnych. Dla szumiącego nagrania podnieś CLEAN, dla ostrych "s" - DE-ESS.
